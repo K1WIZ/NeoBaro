@@ -20,7 +20,7 @@
 #include <Adafruit_NeoPixel.h>
 
 bool firstRun = true;
-String devHostname = "WX-PYRAMID";
+const char* devHostname = "WX-BAROMETER";
 
 // Replace with the URL to the JSON data (HTTPS)
 const char* jsonUrl = "https://your.tempest.weather.apifeed.json"; // Updated URL
@@ -43,26 +43,32 @@ void setup() {
   strip.fill(strip.Color(2, 0, 4));   // purple while waiting for wifi connection
   strip.show();
 
+  // Initialize WiFiManager
   WiFiManager wifiManager;
-  WiFi.mode(WIFI_STA);
-  Serial.print("Connecting WiFi ");
-  WiFi.hostname(devHostname.c_str());
 
-  if (!wifiManager.autoConnect("Weather Pyramid")) {
+  // Set WiFi to station mode
+  WiFi.mode(WIFI_STA);
+  WiFi.hostname(devHostname);
+
+  // Set the timeout for the configuration portal to 2 minutes (120 seconds)
+  wifiManager.setConfigPortalTimeout(120);
+
+  // Start the configuration portal and try to connect to the WiFi
+  // If it fails to connect within the timeout, it will return false
+  if (!wifiManager.autoConnect("WX Barometer")) {
     Serial.println("Failed to connect and hit timeout");
+    // Wait a bit before restarting
     delay(3000);
+    // Restart the ESP
     ESP.restart();
-    delay(5000);
   }
-  
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
+
+  // If connected to WiFi, print the IP Address
+  if (WiFi.status() == WL_CONNECTED) {
+    Serial.println("");
+    Serial.print("MyIP: ");
+    Serial.println(WiFi.localIP());
   }
- 
-  Serial.println("");
-  Serial.print("MyIP: ");
-  Serial.println(WiFi.localIP());
 }
   
 void loop() {
